@@ -94,3 +94,127 @@ pub fn generate_packing_config(
     }
     Ok(packing_configs)
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use googletest::prelude::*;
+    use std::collections::HashMap;
+
+    #[gtest]
+    fn test_generate_packing_config_invalid_plaintext_bits() -> googletest::Result<()> {
+        let agg_config = AggregationConfig {
+            vector_lengths_and_bounds: HashMap::new(),
+            max_number_of_decryptors: 1,
+            max_decryptor_dropouts: 0,
+            max_number_of_clients: 1,
+            session_id: String::from("test"),
+            willow_version: (0, 1),
+        };
+        let invalid_plaintext_bits = 0;
+        let result = generate_packing_config(invalid_plaintext_bits, &agg_config);
+        expect_true!(result.is_err());
+
+        let invalid_plaintext_bits = BIG_INT_BITS;
+        let result = generate_packing_config(invalid_plaintext_bits, &agg_config);
+        expect_true!(result.is_err());
+        Ok(())
+    }
+
+    #[gtest]
+    fn test_generate_packing_config_invalid_input_length_or_bound() -> googletest::Result<()> {
+        let plaintext_bits = 100;
+        let bad_agg_inputs = HashMap::from([(String::from("vec0"), (/*length=*/ 0, 1 << 16))]);
+        let mut bad_agg_config = AggregationConfig {
+            vector_lengths_and_bounds: bad_agg_inputs,
+            max_number_of_decryptors: 1,
+            max_decryptor_dropouts: 0,
+            max_number_of_clients: 1,
+            session_id: String::from("test"),
+            willow_version: (0, 1),
+        };
+        let result = generate_packing_config(plaintext_bits, &bad_agg_config);
+        expect_true!(result.is_err());
+
+        let bad_agg_inputs = HashMap::from([(String::from("vec0"), (32, /*bound=*/ 0))]);
+        bad_agg_config.vector_lengths_and_bounds = bad_agg_inputs;
+        let result = generate_packing_config(plaintext_bits, &bad_agg_config);
+        expect_true!(result.is_err());
+        Ok(())
+    }
+
+    #[gtest]
+    fn test_generate_packing_config_invalid_aggregation_config() -> googletest::Result<()> {
+        let plaintext_bits = 100;
+        let agg_inputs = HashMap::from([(String::from("vec0"), (10, 1 << 8))]);
+        let bad_agg_config = AggregationConfig {
+            vector_lengths_and_bounds: agg_inputs,
+            max_number_of_decryptors: 1,
+            max_decryptor_dropouts: 0,
+            max_number_of_clients: 0,
+            session_id: String::from("test"),
+            willow_version: (0, 1),
+        };
+        let result = generate_packing_config(plaintext_bits, &bad_agg_config);
+        expect_true!(result.is_err());
+        Ok(())
+    }
+
+    #[gtest]
+    fn test_generate_packing_config_plaintext_bits_too_small() -> googletest::Result<()> {
+        // `plaintext_bits` is too small to fit in the sum of input vectors.
+        let plaintext_bits = 8;
+        let agg_inputs = HashMap::from([(String::from("vec0"), (10, 1 << plaintext_bits))]);
+        let agg_config = AggregationConfig {
+            vector_lengths_and_bounds: agg_inputs,
+            max_number_of_decryptors: 1,
+            max_decryptor_dropouts: 0,
+            max_number_of_clients: 2,
+            session_id: String::from("test"),
+            willow_version: (0, 1),
+        };
+        let result = generate_packing_config(plaintext_bits, &agg_config);
+        expect_true!(result.is_err());
+        Ok(())
+    }
+
+    #[gtest]
+    fn test_generate_packing_config() -> googletest::Result<()> {
+        let agg_inputs = HashMap::from([
+            (String::from("small"), (1024, 7)),
+            (String::from("large"), (32, (1 << 16) - 1)),
+            (String::from("long"), (1 << 16, (1 << 16) - 1)),
+        ]);
+        let agg_config = AggregationConfig {
+            vector_lengths_and_bounds: agg_inputs,
+            max_number_of_decryptors: 1,
+            max_decryptor_dropouts: 0,
+            max_number_of_clients: 1 << 8,
+            session_id: String::from("test"),
+            willow_version: (0, 1),
+        };
+        let plaintext_bits = 24;
+        let packed_vector_configs = generate_packing_config(plaintext_bits, &agg_config)?;
+        verify_that!(
+            packed_vector_configs.keys().collect::<Vec<_>>(),
+            unordered_elements_are![
+                eq(&&String::from("small")),
+                eq(&&String::from("large")),
+                eq(&&String::from("long"))
+            ]
+        )?;
+        expect_eq!(
+            packed_vector_configs.get("small").unwrap(),
+            &PackedVectorConfig { base: 1 << 11, dimension: 2, num_packed_coeffs: 512 }
+        );
+        expect_eq!(
+            packed_vector_configs.get("large").unwrap(),
+            &PackedVectorConfig { base: 1 << 24, dimension: 1, num_packed_coeffs: 32 }
+        );
+        expect_eq!(
+            packed_vector_configs.get("long").unwrap(),
+            &PackedVectorConfig { base: 1 << 24, dimension: 1, num_packed_coeffs: 65536 }
+        );
+        Ok(())
+    }
+}
