@@ -17,16 +17,18 @@ use std::collections::HashMap;
 use std::hint::black_box;
 use std::time::Duration;
 
+use ahe_traits::AheBase;
 use client_traits::SecureAggregationClient;
 use decryptor_traits::SecureAggregationDecryptor;
 use kahe_shell::ShellKahe;
 use kahe_traits::KaheBase;
+use parameters_shell::create_shell_configs;
 use prng_traits::SecurePrng;
 use server_traits::SecureAggregationServer;
-use parameters_shell::create_shell_configs;
 use single_thread_hkdf::SingleThreadHkdfPrng;
 use testing_utils::{generate_random_unsigned_vector, ShellClient, ShellClientMessage};
 use vahe_shell::ShellVahe;
+use vahe_traits::VaheBase;
 use verifier_traits::SecureAggregationVerifier;
 use willow_api_common::AggregationConfig;
 use willow_v1_client::WillowV1Client;
@@ -39,6 +41,7 @@ use willow_v1_server::{ServerState, WillowV1Server};
 use willow_v1_verifier::{VerifierState, WillowV1Verifier};
 
 const DEFAULT_ID: &str = "default";
+const CONTEXT_STRING: &[u8] = b"benchmark_context_string";
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -126,12 +129,11 @@ fn setup_base(args: &Args) -> BaseInputs {
     };
     let (kahe_config, ahe_config) = create_shell_configs(&aggregation_config).unwrap();
     let public_kahe_seed = SingleThreadHkdfPrng::generate_seed().unwrap();
-    let public_ahe_seed = SingleThreadHkdfPrng::generate_seed().unwrap();
 
     // Create client.
     let common = WillowCommon {
-        kahe: ShellKahe::new(kahe_config.clone(), &public_kahe_seed).unwrap(),
-        vahe: ShellVahe::new(ahe_config.clone(), &public_ahe_seed).unwrap(),
+        kahe: ShellKahe::new(kahe_config.clone(), CONTEXT_STRING).unwrap(),
+        vahe: ShellVahe::new(ahe_config.clone(), CONTEXT_STRING).unwrap(),
     };
     let seed = SingleThreadHkdfPrng::generate_seed().unwrap();
     let prng = SingleThreadHkdfPrng::create(&seed).unwrap();
@@ -139,8 +141,8 @@ fn setup_base(args: &Args) -> BaseInputs {
 
     // Create decryptor, which needs its own `common` and `prng`.
     let common = WillowCommon {
-        kahe: ShellKahe::new(kahe_config.clone(), &public_kahe_seed).unwrap(),
-        vahe: ShellVahe::new(ahe_config.clone(), &public_ahe_seed).unwrap(),
+        kahe: ShellKahe::new(kahe_config.clone(), CONTEXT_STRING).unwrap(),
+        vahe: ShellVahe::new(ahe_config.clone(), CONTEXT_STRING).unwrap(),
     };
     let seed = SingleThreadHkdfPrng::generate_seed().unwrap();
     let prng = SingleThreadHkdfPrng::create(&seed).unwrap();
@@ -149,16 +151,16 @@ fn setup_base(args: &Args) -> BaseInputs {
 
     // Create server.
     let common = WillowCommon {
-        kahe: ShellKahe::new(kahe_config.clone(), &public_kahe_seed).unwrap(),
-        vahe: ShellVahe::new(ahe_config.clone(), &public_ahe_seed).unwrap(),
+        kahe: ShellKahe::new(kahe_config.clone(), CONTEXT_STRING).unwrap(),
+        vahe: ShellVahe::new(ahe_config.clone(), CONTEXT_STRING).unwrap(),
     };
     let server = WillowV1Server { common };
     let mut server_state = ServerState::new();
 
     // Create verifier.
     let common = WillowCommon {
-        kahe: ShellKahe::new(kahe_config.clone(), &public_kahe_seed).unwrap(),
-        vahe: ShellVahe::new(ahe_config.clone(), &public_ahe_seed).unwrap(),
+        kahe: ShellKahe::new(kahe_config.clone(), CONTEXT_STRING).unwrap(),
+        vahe: ShellVahe::new(ahe_config.clone(), CONTEXT_STRING).unwrap(),
     };
     let verifier = WillowV1Verifier { common };
     let verifier_state = VerifierState::new();

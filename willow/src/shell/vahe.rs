@@ -37,16 +37,6 @@ pub struct ShellVahe {
 }
 
 impl ShellVahe {
-    // The public_seed is assumed to be a uniform 16-byte slice.
-    pub fn new(config: ShellAheConfig, public_seed: &Seed) -> Result<Self, status::StatusError> {
-        let mut q = 1;
-        for modulus in &config.qs {
-            q *= *modulus as u128;
-        }
-        let ahe = ShellAhe::new(config, public_seed)?;
-        Ok(ShellVahe { ahe: ahe, q: q, public_seed: public_seed.clone() })
-    }
-
     fn get_transcript_and_proof_seed(
         &self,
         operation_name: &'static [u8],
@@ -78,6 +68,22 @@ impl AheBase for ShellVahe {
     type PartialDecryption = <ShellAhe as AheBase>::PartialDecryption;
     type PublicKey = <ShellAhe as AheBase>::PublicKey;
     type Rng = <ShellAhe as AheBase>::Rng;
+    type Config = ShellAheConfig;
+
+    fn new(config: Self::Config, context_string: &[u8]) -> Result<Self, status::StatusError> {
+        let public_seed = single_thread_hkdf::compute_hkdf(
+            context_string,
+            b"",
+            b"ShellVahe.public_seed",
+            single_thread_hkdf::seed_length(),
+        )?;
+        let mut q = 1;
+        for modulus in &config.qs {
+            q *= *modulus as u128;
+        }
+        let ahe = ShellAhe::new(config, context_string)?;
+        Ok(ShellVahe { ahe: ahe, q: q, public_seed: public_seed })
+    }
 
     fn aggregate_public_key_shares(
         &self,
@@ -392,10 +398,11 @@ mod test {
     use shell_testing_parameters::make_ahe_config;
     use single_thread_hkdf::SingleThreadHkdfPrng;
 
+    const CONTEXT_STRING: &[u8] = b"testing_context_string";
+
     #[gtest]
     fn test_verifiable_key_gen() -> googletest::Result<()> {
-        let public_seed = SingleThreadHkdfPrng::generate_seed()?;
-        let vahe = ShellVahe::new(make_ahe_config(), &public_seed)?;
+        let vahe = ShellVahe::new(make_ahe_config(), CONTEXT_STRING)?;
         let seed = SingleThreadHkdfPrng::generate_seed()?;
         let mut prng = SingleThreadHkdfPrng::create(&seed)?;
         let (_, pk_share, key_gen_proof) = vahe.verifiable_key_gen(&mut prng)?;
@@ -405,8 +412,7 @@ mod test {
 
     #[gtest]
     fn test_verifiable_key_gen_with_bad_proof() -> googletest::Result<()> {
-        let public_seed = SingleThreadHkdfPrng::generate_seed()?;
-        let vahe = ShellVahe::new(make_ahe_config(), &public_seed)?;
+        let vahe = ShellVahe::new(make_ahe_config(), CONTEXT_STRING)?;
         let seed = SingleThreadHkdfPrng::generate_seed()?;
         let mut prng = SingleThreadHkdfPrng::create(&seed)?;
         let (_, pk_share, _) = vahe.verifiable_key_gen(&mut prng)?;
@@ -419,8 +425,7 @@ mod test {
 
     #[gtest]
     fn test_verifiable_encrypt() -> googletest::Result<()> {
-        let public_seed = SingleThreadHkdfPrng::generate_seed()?;
-        let vahe = ShellVahe::new(make_ahe_config(), &public_seed)?;
+        let vahe = ShellVahe::new(make_ahe_config(), CONTEXT_STRING)?;
         let seed = SingleThreadHkdfPrng::generate_seed()?;
         let mut prng = SingleThreadHkdfPrng::create(&seed)?;
         let (_, pk_share, _) = vahe.verifiable_key_gen(&mut prng)?;
@@ -432,8 +437,7 @@ mod test {
 
     #[gtest]
     fn test_verifiable_encrypt_long_plaintext() -> googletest::Result<()> {
-        let public_seed = SingleThreadHkdfPrng::generate_seed()?;
-        let vahe = ShellVahe::new(make_ahe_config(), &public_seed)?;
+        let vahe = ShellVahe::new(make_ahe_config(), CONTEXT_STRING)?;
         let seed = SingleThreadHkdfPrng::generate_seed()?;
         let mut prng = SingleThreadHkdfPrng::create(&seed)?;
         let (_, pk_share, _) = vahe.verifiable_key_gen(&mut prng)?;
@@ -445,8 +449,7 @@ mod test {
 
     #[gtest]
     fn test_verifiable_encrypt_with_bad_length_proof() -> googletest::Result<()> {
-        let public_seed = SingleThreadHkdfPrng::generate_seed()?;
-        let vahe = ShellVahe::new(make_ahe_config(), &public_seed)?;
+        let vahe = ShellVahe::new(make_ahe_config(), CONTEXT_STRING)?;
         let seed = SingleThreadHkdfPrng::generate_seed()?;
         let mut prng = SingleThreadHkdfPrng::create(&seed)?;
         let (_, pk_share, key_gen_proof) = vahe.verifiable_key_gen(&mut prng)?;
@@ -460,8 +463,7 @@ mod test {
 
     #[gtest]
     fn test_verifiable_encrypt_with_bad_proof() -> googletest::Result<()> {
-        let public_seed = SingleThreadHkdfPrng::generate_seed()?;
-        let vahe = ShellVahe::new(make_ahe_config(), &public_seed)?;
+        let vahe = ShellVahe::new(make_ahe_config(), CONTEXT_STRING)?;
         let seed = SingleThreadHkdfPrng::generate_seed()?;
         let mut prng = SingleThreadHkdfPrng::create(&seed)?;
         let (_, pk_share, key_gen_proof) = vahe.verifiable_key_gen(&mut prng)?;
@@ -475,8 +477,7 @@ mod test {
 
     #[gtest]
     fn test_verifiable_partial_dec() -> googletest::Result<()> {
-        let public_seed = SingleThreadHkdfPrng::generate_seed()?;
-        let vahe = ShellVahe::new(make_ahe_config(), &public_seed)?;
+        let vahe = ShellVahe::new(make_ahe_config(), CONTEXT_STRING)?;
         let seed = SingleThreadHkdfPrng::generate_seed()?;
         let mut prng = SingleThreadHkdfPrng::create(&seed)?;
         let (sk_share, pk_share, _) = vahe.verifiable_key_gen(&mut prng)?;
@@ -490,8 +491,7 @@ mod test {
 
     #[gtest]
     fn test_verifiable_partial_dec_long_plaintext() -> googletest::Result<()> {
-        let public_seed = SingleThreadHkdfPrng::generate_seed()?;
-        let vahe = ShellVahe::new(make_ahe_config(), &public_seed)?;
+        let vahe = ShellVahe::new(make_ahe_config(), CONTEXT_STRING)?;
         let seed = SingleThreadHkdfPrng::generate_seed()?;
         let mut prng = SingleThreadHkdfPrng::create(&seed)?;
         let (sk_share, pk_share, _) = vahe.verifiable_key_gen(&mut prng)?;
@@ -505,8 +505,7 @@ mod test {
 
     #[gtest]
     fn test_verifiable_partial_dec_with_bad_length_proof() -> googletest::Result<()> {
-        let public_seed = SingleThreadHkdfPrng::generate_seed()?;
-        let vahe = ShellVahe::new(make_ahe_config(), &public_seed)?;
+        let vahe = ShellVahe::new(make_ahe_config(), CONTEXT_STRING)?;
         let seed = SingleThreadHkdfPrng::generate_seed()?;
         let mut prng = SingleThreadHkdfPrng::create(&seed)?;
         let (sk_share, pk_share, key_gen_proof) = vahe.verifiable_key_gen(&mut prng)?;
@@ -522,8 +521,7 @@ mod test {
 
     #[gtest]
     fn test_verifiable_partial_dec_with_bad_proof() -> googletest::Result<()> {
-        let public_seed = SingleThreadHkdfPrng::generate_seed()?;
-        let vahe = ShellVahe::new(make_ahe_config(), &public_seed)?;
+        let vahe = ShellVahe::new(make_ahe_config(), CONTEXT_STRING)?;
         let seed = SingleThreadHkdfPrng::generate_seed()?;
         let mut prng = SingleThreadHkdfPrng::create(&seed)?;
         let (sk_share, pk_share, key_gen_proof) = vahe.verifiable_key_gen(&mut prng)?;

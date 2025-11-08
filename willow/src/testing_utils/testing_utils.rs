@@ -45,11 +45,10 @@ pub fn generate_random_signed_vector(num_values: usize, max_absolute_value: i64)
 /// and the given public seeds.
 pub fn create_willow_common(
     aggregation_config: &AggregationConfig,
-    public_kahe_seed: &Seed,
-    public_ahe_seed: &Seed,
+    context_string: &[u8],
 ) -> WillowCommon<ShellKahe, ShellVahe> {
-    let kahe = ShellKahe::new(make_kahe_config(aggregation_config), public_kahe_seed).unwrap();
-    let vahe = ShellVahe::new(make_ahe_config(), public_ahe_seed).unwrap();
+    let kahe = ShellKahe::new(make_kahe_config(aggregation_config), context_string).unwrap();
+    let vahe = ShellVahe::new(make_ahe_config(), context_string).unwrap();
     WillowCommon { kahe, vahe }
 }
 

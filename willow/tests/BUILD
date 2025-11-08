@@ -41,6 +41,7 @@ rust_test(
         "//willow/src/traits:kahe_traits",
         "//willow/src/traits:prng_traits",
         "//willow/src/traits:server_traits",
+        "//willow/src/traits:vahe_traits",
         "//willow/src/traits:verifier_traits",
         "//willow/src/willow_v1:willow_v1_client",
         "//willow/src/willow_v1:willow_v1_common",

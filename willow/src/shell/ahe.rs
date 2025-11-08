@@ -56,21 +56,6 @@ pub struct ShellAhe {
 }
 
 impl ShellAhe {
-    pub fn new(config: ShellAheConfig, public_seed: &Seed) -> Result<Self, status::StatusError> {
-        let num_coeffs = 1 << config.log_n;
-        let public_ahe_parameters = ahe::create_public_parameters(
-            config.log_n,
-            config.t,
-            &config.qs,
-            /* error_variance= */ ERROR_VARIANCE,
-            /* s_base_flood= */ S_BASE_FLOOD,
-            config.s_flood,
-            &public_seed,
-        )?;
-
-        Ok(Self { public_ahe_parameters, num_coeffs })
-    }
-
     /// Convenience function.
     fn add_vec_rns_polynomial_in_place(
         &self,
@@ -400,6 +385,29 @@ impl AheBase for ShellAhe {
 
     type Rng = SingleThreadHkdfPrng;
 
+    type Config = ShellAheConfig;
+
+    fn new(config: Self::Config, context_string: &[u8]) -> Result<Self, status::StatusError> {
+        let num_coeffs = 1 << config.log_n;
+        let public_seed = single_thread_hkdf::compute_hkdf(
+            context_string,
+            b"",
+            b"ShellAhe.public_seed",
+            single_thread_hkdf::seed_length(),
+        )?;
+        let public_ahe_parameters = ahe::create_public_parameters(
+            config.log_n,
+            config.t,
+            &config.qs,
+            /* error_variance= */ ERROR_VARIANCE,
+            /* s_base_flood= */ S_BASE_FLOOD,
+            config.s_flood,
+            &public_seed,
+        )?;
+
+        Ok(Self { public_ahe_parameters, num_coeffs })
+    }
+
     fn aggregate_public_key_shares(
         &self,
         public_key_shares: &[Self::PublicKeyShare],
@@ -651,13 +659,13 @@ mod test {
     const NUM_DECRYPTORS: usize = 3;
     const NUM_CLIENTS: usize = 1000;
     const MAX_ABSOLUTE_VALUE: i64 = 72;
+    const CONTEXT_STRING: &[u8] = b"test_context_string";
 
     #[gtest]
     fn test_encrypt_decrypt_one() -> googletest::Result<()> {
         const NUM_VALUES: usize = 100;
 
-        let public_seed = SingleThreadHkdfPrng::generate_seed()?;
-        let ahe = ShellAhe::new(make_ahe_config(), &public_seed)?;
+        let ahe = ShellAhe::new(make_ahe_config(), CONTEXT_STRING)?;
 
         let pt = vec![1, 2, 3, 4, 5, 6, 7, 8];
         let seed = SingleThreadHkdfPrng::generate_seed()?;
@@ -682,8 +690,7 @@ mod test {
             let config = make_ahe_config();
             let t = config.t; // Keep a copy of the plaintext modulus.
 
-            let public_seed = SingleThreadHkdfPrng::generate_seed()?;
-            let ahe = ShellAhe::new(config, &public_seed)?;
+            let ahe = ShellAhe::new(config, CONTEXT_STRING)?;
             let seed = SingleThreadHkdfPrng::generate_seed()?;
             let mut prng = SingleThreadHkdfPrng::create(&seed)?;
 
@@ -750,8 +757,7 @@ mod test {
 
     #[gtest]
     fn test_errors() -> googletest::Result<()> {
-        let public_seed = SingleThreadHkdfPrng::generate_seed()?;
-        let ahe = ShellAhe::new(make_ahe_config(), &public_seed)?;
+        let ahe = ShellAhe::new(make_ahe_config(), CONTEXT_STRING)?;
         let seed = SingleThreadHkdfPrng::generate_seed()?;
         let mut prng = SingleThreadHkdfPrng::create(&seed)?;
 
@@ -826,11 +832,10 @@ mod test {
 
     #[gtest]
     fn test_manual_encryption() -> googletest::Result<()> {
-        let public_seed = SingleThreadHkdfPrng::generate_seed()?;
         let config = make_ahe_config();
         let q: i128 = config.qs.iter().map(|x| *x as i128).product();
 
-        let ahe = ShellAhe::new(config, &public_seed)?;
+        let ahe = ShellAhe::new(config, CONTEXT_STRING)?;
         let seed = SingleThreadHkdfPrng::generate_seed()?;
         let mut prng = SingleThreadHkdfPrng::create(&seed)?;
         let (_, pk_share, _) = ahe.key_gen(&mut prng)?;
@@ -871,9 +876,8 @@ mod test {
 
     #[gtest]
     fn test_export_ciphertext_has_right_order() -> googletest::Result<()> {
-        let public_seed = SingleThreadHkdfPrng::generate_seed()?;
         let config = make_ahe_config();
-        let ahe = ShellAhe::new(config, &public_seed)?;
+        let ahe = ShellAhe::new(config, CONTEXT_STRING)?;
         let seed = SingleThreadHkdfPrng::generate_seed()?;
         let mut prng = SingleThreadHkdfPrng::create(&seed)?;
         let (_, pk_share, _) = ahe.key_gen(&mut prng)?;

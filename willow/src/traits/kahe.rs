@@ -18,7 +18,13 @@ use status::StatusError;
 /// Base trait for KAHE primitives, containing types that are shared across all
 /// primitives. Types implementing this trait can also store public parameters
 /// shared across primitives.
-pub trait KaheBase {
+pub trait KaheBase: Sized {
+    type Config;
+
+    /// Creates a KAHE instance. `context_string` is used for domain separation and must be unique
+    /// to each instantiation of the KAHE scheme.
+    fn new(config: Self::Config, context_string: &[u8]) -> Result<Self, StatusError>;
+
     /// Secret key for symmetric encryption. Supports addition (key
     /// homomorphism). Addition needs additional context and works on
     /// types defined outside this crate, so we use functions instead of

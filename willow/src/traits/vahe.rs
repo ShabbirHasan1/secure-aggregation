@@ -15,7 +15,7 @@
 use ahe_traits::AheBase;
 use status::{Status, StatusError};
 
-pub trait VaheBase: AheBase {
+pub trait VaheBase: AheBase + Sized {
     type KeyGenProof;
     type EncryptionProof: Clone;
     type PartialDecProof;

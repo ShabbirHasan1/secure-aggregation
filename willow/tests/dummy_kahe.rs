@@ -34,20 +34,18 @@ pub struct DummyKahe {
     a: Poly, // public *a*, same for all roles.
 }
 
-impl DummyKahe {
-    /// Setup function that samples *a* from a seed.
-    pub fn setup(seed: &[u8; 32]) -> Self {
-        let a = Poly(vec![seed[0]]); // Could be a PRG
-        DummyKahe { a }
-    }
-}
-
 /// Associated types for DummyKahe.
 impl KaheBase for DummyKahe {
     type SecretKey = Poly;
     type Plaintext = Poly;
     type Ciphertext = Poly;
     type Rng = Vec<u8>;
+    type Config = ();
+
+    fn new(config: Self::Config, context_string: &[u8]) -> Result<Self, status::StatusError> {
+        let a = Poly(vec![if context_string.len() > 0 { context_string[0] } else { 0 }]); // Could be a PRG
+        Ok(DummyKahe { a })
+    }
 
     fn add_keys_in_place(&self, left: &Poly, right: &mut Poly) -> status::Status {
         *right += left;
@@ -119,7 +117,7 @@ mod test {
 
         // Both Client and Server would run this on their side.
         let seed = [0u8; 32];
-        let dummy_kahe = DummyKahe::setup(&seed);
+        let dummy_kahe = DummyKahe::new((), &seed)?;
 
         // Client generates key and encrypts message.
         let mut rng = vec![0u8];
@@ -137,7 +135,7 @@ mod test {
     #[gtest]
     fn add_two_inputs() -> googletest::Result<()> {
         let seed = [0u8; 32];
-        let dummy_kahe = DummyKahe::setup(&seed);
+        let dummy_kahe = DummyKahe::new((), &seed)?;
 
         // Client 1
         let mut rng1 = vec![0u8];

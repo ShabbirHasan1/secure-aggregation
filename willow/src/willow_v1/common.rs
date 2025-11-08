@@ -65,6 +65,7 @@ pub struct CiphertextContribution<Kahe: KaheBase, Vahe: VaheBase> {
 pub struct DecryptionRequestContribution<Vahe: VaheBase> {
     pub partial_dec_ciphertext: Vahe::PartialDecCiphertext,
     pub proof: Vahe::EncryptionProof,
+    // pub client_id: u128,
 }
 
 impl<Kahe: KaheBase, Vahe: VaheBase> SecureAggregationCommon for WillowCommon<Kahe, Vahe> {

@@ -76,6 +76,8 @@ mod test {
     use vahe_traits::{Recover, VaheBase};
     use willow_api_common::AggregationConfig;
 
+    const CONTEXT_STRING: &[u8] = b"test_context_string";
+
     #[gtest]
     fn test_create_client_message() -> googletest::Result<()> {
         let default_id = String::from("default");
@@ -89,16 +91,15 @@ mod test {
         };
         // Generate public parameters for KAHE and AHE.
         let public_kahe_seed = SingleThreadHkdfPrng::generate_seed()?;
-        let public_ahe_seed = SingleThreadHkdfPrng::generate_seed()?;
 
         // Create a client.
-        let common = create_willow_common(&aggregation_config, &public_kahe_seed, &public_ahe_seed);
+        let common = create_willow_common(&aggregation_config, CONTEXT_STRING);
         let client_seed = SingleThreadHkdfPrng::generate_seed()?;
         let prng = SingleThreadHkdfPrng::create(&client_seed)?;
         let mut client = WillowV1Client { common: common, prng: prng };
 
         // Generate AHE keys.
-        let common = create_willow_common(&aggregation_config, &public_kahe_seed, &public_ahe_seed);
+        let common = create_willow_common(&aggregation_config, CONTEXT_STRING);
         let seed = SingleThreadHkdfPrng::generate_seed()?;
         let mut prng = SingleThreadHkdfPrng::create(&seed)?;
         let (sk_share, pk_share, _) = common.vahe.key_gen(&mut prng)?;
@@ -146,22 +147,21 @@ mod test {
 
         // Generate public parameters for KAHE and AHE.
         let public_kahe_seed = SingleThreadHkdfPrng::generate_seed()?;
-        let public_ahe_seed = SingleThreadHkdfPrng::generate_seed()?;
 
         // Create a client.
-        let common = create_willow_common(&aggregation_config, &public_kahe_seed, &public_ahe_seed);
+        let common = create_willow_common(&aggregation_config, CONTEXT_STRING);
         let client1_seed = SingleThreadHkdfPrng::generate_seed()?;
         let prng = SingleThreadHkdfPrng::create(&client1_seed)?;
         let mut client1 = WillowV1Client { common: common, prng: prng };
 
         // Create a second client.
-        let common = create_willow_common(&aggregation_config, &public_kahe_seed, &public_ahe_seed);
+        let common = create_willow_common(&aggregation_config, CONTEXT_STRING);
         let client2_seed = SingleThreadHkdfPrng::generate_seed()?;
         let prng = SingleThreadHkdfPrng::create(&client2_seed)?;
         let mut client2 = WillowV1Client { common: common, prng: prng };
 
         // Generate AHE keys.
-        let common = create_willow_common(&aggregation_config, &public_kahe_seed, &public_ahe_seed);
+        let common = create_willow_common(&aggregation_config, CONTEXT_STRING);
         let seed = SingleThreadHkdfPrng::generate_seed()?;
         let mut prng = SingleThreadHkdfPrng::create(&seed)?;
         let (sk_share, pk_share, _) = common.vahe.key_gen(&mut prng)?;
