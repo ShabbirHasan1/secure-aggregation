@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
+load("@rules_rust//rust:defs.bzl", "rust_test")
 
 package(default_applicable_licenses = [
 ])
@@ -48,25 +48,5 @@ rust_test(
         "//willow/src/willow_v1:willow_v1_decryptor",
         "//willow/src/willow_v1:willow_v1_server",
         "//willow/src/willow_v1:willow_v1_verifier",
-    ],
-)
-
-# Dummy KAHE test.
-rust_library(
-    name = "dummy_kahe",
-    testonly = 1,
-    srcs = ["dummy_kahe.rs"],
-    deps = [
-        "//shell_wrapper:status",
-        "//willow/src/traits:kahe_traits",
-    ],
-)
-
-rust_test(
-    name = "dummy_kahe_test",
-    crate = ":dummy_kahe",
-    deps = [
-        "@crate_index//:googletest",
-        "//shell_wrapper:status_matchers",
     ],
 )
