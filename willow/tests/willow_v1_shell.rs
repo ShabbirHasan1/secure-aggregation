@@ -75,18 +75,18 @@ fn encrypt_decrypt_one() -> googletest::Result<()> {
     let common = create_willow_common(&aggregation_config, CONTEXT_STRING);
     let seed = SingleThreadHkdfPrng::generate_seed().unwrap();
     let prng = SingleThreadHkdfPrng::create(&seed).unwrap();
-    let mut decryptor_state = DecryptorState::new();
+    let mut decryptor_state = DecryptorState::default();
     let mut decryptor = WillowV1Decryptor { common, prng };
 
     // Create server.
     let common = create_willow_common(&aggregation_config, CONTEXT_STRING);
     let server = WillowV1Server { common };
-    let mut server_state = ServerState::new();
+    let mut server_state = ServerState::default();
 
     // Create verifier.
     let common = create_willow_common(&aggregation_config, CONTEXT_STRING);
     let verifier = WillowV1Verifier { common };
-    let mut verifier_state = VerifierState::new();
+    let mut verifier_state = VerifierState::default();
 
     // Decryptor generates public key share.
     let public_key_share = decryptor.create_public_key_share(&mut decryptor_state).unwrap();
@@ -154,18 +154,18 @@ fn encrypt_decrypt_multiple_clients() -> googletest::Result<()> {
     let common = create_willow_common(&aggregation_config, CONTEXT_STRING);
     let seed = SingleThreadHkdfPrng::generate_seed().unwrap();
     let prng = SingleThreadHkdfPrng::create(&seed).unwrap();
-    let mut decryptor_state = DecryptorState::new();
+    let mut decryptor_state = DecryptorState::default();
     let mut decryptor = WillowV1Decryptor { common, prng };
 
     // Create server.
     let common = create_willow_common(&aggregation_config, CONTEXT_STRING);
     let server = WillowV1Server { common };
-    let mut server_state = ServerState::new();
+    let mut server_state = ServerState::default();
 
     // Create verifier.
     let common = create_willow_common(&aggregation_config, CONTEXT_STRING);
     let verifier = WillowV1Verifier { common };
-    let mut verifier_state = VerifierState::new();
+    let mut verifier_state = VerifierState::default();
 
     // Decryptor generates public key share.
     let public_key_share = decryptor.create_public_key_share(&mut decryptor_state).unwrap();
@@ -257,18 +257,18 @@ fn encrypt_decrypt_multiple_clients_including_invalid_proofs() -> googletest::Re
     let common = create_willow_common(&aggregation_config, CONTEXT_STRING);
     let seed = SingleThreadHkdfPrng::generate_seed().unwrap();
     let prng = SingleThreadHkdfPrng::create(&seed).unwrap();
-    let mut decryptor_state = DecryptorState::new();
+    let mut decryptor_state = DecryptorState::default();
     let mut decryptor = WillowV1Decryptor { common, prng };
 
     // Create server.
     let common = create_willow_common(&aggregation_config, CONTEXT_STRING);
     let server = WillowV1Server { common };
-    let mut server_state = ServerState::new();
+    let mut server_state = ServerState::default();
 
     // Create verifier.
     let common = create_willow_common(&aggregation_config, CONTEXT_STRING);
     let verifier = WillowV1Verifier { common };
-    let mut verifier_state = VerifierState::new();
+    let mut verifier_state = VerifierState::default();
 
     // Decryptor generates public key share.
     let public_key_share = decryptor.create_public_key_share(&mut decryptor_state).unwrap();
@@ -384,7 +384,7 @@ fn encrypt_decrypt_many_clients_decryptors() -> googletest::Result<()> {
     let vahe = ShellVahe::new(ahe_config, CONTEXT_STRING).unwrap();
     let common = WillowCommon { kahe, vahe };
     let server = WillowV1Server { common };
-    let mut server_state = ServerState::new();
+    let mut server_state = ServerState::default();
 
     // Create verifier.
     let (kahe_config, ahe_config) = create_shell_configs(&aggregation_config).unwrap();
@@ -392,7 +392,7 @@ fn encrypt_decrypt_many_clients_decryptors() -> googletest::Result<()> {
     let vahe = ShellVahe::new(ahe_config, CONTEXT_STRING).unwrap();
     let common = WillowCommon { kahe, vahe };
     let verifier = WillowV1Verifier { common };
-    let mut verifier_state = VerifierState::new();
+    let mut verifier_state = VerifierState::default();
 
     // Create decryptors, which needs their own `common` (with same public
     // polynomials generated from the seeds) and `prng`.
@@ -405,7 +405,7 @@ fn encrypt_decrypt_many_clients_decryptors() -> googletest::Result<()> {
         let common = WillowCommon { kahe, vahe };
         let seed = SingleThreadHkdfPrng::generate_seed().unwrap();
         let prng = SingleThreadHkdfPrng::create(&seed).unwrap();
-        let mut decryptor_state = DecryptorState::new();
+        let mut decryptor_state = DecryptorState::default();
         let mut decryptor = WillowV1Decryptor { common, prng };
 
         // Decryptor generates public key share.
@@ -508,7 +508,7 @@ fn encrypt_decrypt_no_dropout() -> googletest::Result<()> {
         let common = create_willow_common(&aggregation_config, CONTEXT_STRING);
         let seed = SingleThreadHkdfPrng::generate_seed().unwrap();
         let prng = SingleThreadHkdfPrng::create(&seed).unwrap();
-        let decryptor_state = DecryptorState::new();
+        let decryptor_state = DecryptorState::default();
         let decryptor = WillowV1Decryptor { common, prng };
         decryptor_states.push(decryptor_state);
         decryptors.push(decryptor);
@@ -517,12 +517,12 @@ fn encrypt_decrypt_no_dropout() -> googletest::Result<()> {
     // Create server.
     let common = create_willow_common(&aggregation_config, CONTEXT_STRING);
     let server = WillowV1Server { common };
-    let mut server_state = ServerState::new();
+    let mut server_state = ServerState::default();
 
     // Create verifier.
     let common = create_willow_common(&aggregation_config, CONTEXT_STRING);
     let verifier = WillowV1Verifier { common };
-    let mut verifier_state = VerifierState::new();
+    let mut verifier_state = VerifierState::default();
 
     // Decryptors generate public key shares.
     for i in 0..decryptors.len() {

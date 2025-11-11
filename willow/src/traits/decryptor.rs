@@ -17,7 +17,7 @@ use status::StatusError;
 /// Base trait for the Decryptor.
 pub trait SecureAggregationDecryptor<Common: common_traits::SecureAggregationCommon> {
     /// The state held by the Decryptor between messages.
-    type DecryptorState;
+    type DecryptorState: Default;
 
     /// Creates a public key share to be sent to the Server, updating the
     /// decryptor state.

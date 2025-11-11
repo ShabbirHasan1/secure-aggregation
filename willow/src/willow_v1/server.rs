@@ -34,8 +34,8 @@ pub struct ServerState<Kahe: KaheBase, Vahe: VaheBase + PartialDec> {
     partial_decryption_sum: Option<Vahe::PartialDecryption>,
 }
 
-impl<Kahe: KaheBase, Vahe: VaheBase + PartialDec> ServerState<Kahe, Vahe> {
-    pub fn new() -> Self {
+impl<Kahe: KaheBase, Vahe: VaheBase + PartialDec> Default for ServerState<Kahe, Vahe> {
+    fn default() -> Self {
         Self { decryptor_public_key_shares: vec![], client_sum: None, partial_decryption_sum: None }
     }
 }

@@ -15,10 +15,9 @@
 use status::StatusError;
 /// Base trait for the secure aggregation verifier.
 ///
-/// Protocol diagram: https://drive.google.com/file/d/10wz5fkzhliVSqcs-rZtn9t7YDXCl5tf8/view?usp=sharing
 pub trait SecureAggregationVerifier<Common: common_traits::SecureAggregationCommon> {
     /// The state held by the verifier between messages.
-    type VerifierState;
+    type VerifierState: Default;
 
     /// Verifies a clients decryption request contribution.
     fn verify_and_include(

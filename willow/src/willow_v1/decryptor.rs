@@ -31,8 +31,8 @@ pub struct DecryptorState<Vahe: VaheBase> {
     sk_share: Option<Vahe::SecretKeyShare>,
 }
 
-impl<Vahe: VaheBase> DecryptorState<Vahe> {
-    pub fn new() -> Self {
+impl<Vahe: VaheBase> Default for DecryptorState<Vahe> {
+    fn default() -> Self {
         Self { sk_share: None }
     }
 }

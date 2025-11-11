@@ -16,10 +16,9 @@ use status::StatusError;
 /// Base trait for the secure aggregation server. Also includes the Coordinator
 /// functionality of the threshold AHE scheme.
 ///
-/// Protocol diagram: https://drive.google.com/file/d/10wz5fkzhliVSqcs-rZtn9t7YDXCl5tf8/view?usp=sharing
 pub trait SecureAggregationServer<Common: common_traits::SecureAggregationCommon> {
     /// The state held by the server between messages.
-    type ServerState;
+    type ServerState: Default;
     /// The result of the aggregation.
     type AggregationResult;
 

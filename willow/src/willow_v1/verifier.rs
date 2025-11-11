@@ -46,8 +46,8 @@ pub struct VerifierState<Vahe: VaheBase> {
     maybe_state: Option<NonemptyVerifierState<Vahe>>,
 }
 
-impl<Vahe: VaheBase> VerifierState<Vahe> {
-    pub fn new() -> Self {
+impl<Vahe: VaheBase> Default for VerifierState<Vahe> {
+    fn default() -> Self {
         Self { maybe_state: None }
     }
 }

@@ -146,7 +146,7 @@ fn setup_base(args: &Args) -> BaseInputs {
     };
     let seed = SingleThreadHkdfPrng::generate_seed().unwrap();
     let prng = SingleThreadHkdfPrng::create(&seed).unwrap();
-    let mut decryptor_state = DecryptorState::new();
+    let mut decryptor_state = DecryptorState::default();
     let mut decryptor = WillowV1Decryptor { common, prng };
 
     // Create server.
@@ -155,7 +155,7 @@ fn setup_base(args: &Args) -> BaseInputs {
         vahe: ShellVahe::new(ahe_config.clone(), CONTEXT_STRING).unwrap(),
     };
     let server = WillowV1Server { common };
-    let mut server_state = ServerState::new();
+    let mut server_state = ServerState::default();
 
     // Create verifier.
     let common = WillowCommon {
@@ -163,7 +163,7 @@ fn setup_base(args: &Args) -> BaseInputs {
         vahe: ShellVahe::new(ahe_config.clone(), CONTEXT_STRING).unwrap(),
     };
     let verifier = WillowV1Verifier { common };
-    let verifier_state = VerifierState::new();
+    let verifier_state = VerifierState::default();
 
     // Decryptor generates public key share.
     let public_key_share = decryptor.create_public_key_share(&mut decryptor_state).unwrap();
