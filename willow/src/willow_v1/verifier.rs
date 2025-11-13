@@ -338,6 +338,7 @@ mod tests {
         )
     }
 
+    #[gtest]
     fn merge_with_empty_state_preserves_nonce_bounds() -> googletest::Result<()> {
         let setup = setup()?;
         let mut verifier_state_1 = VerifierState::default();
